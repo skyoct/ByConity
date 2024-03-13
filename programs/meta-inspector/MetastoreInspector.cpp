@@ -27,6 +27,7 @@
 #include <brpc/server.h>
 #include <gflags/gflags.h>
 #include <iostream>
+#include <Core/UUID.h>
 #if USE_REPLXX
 #    include <common/ReplxxLineReader.h>
 #elif defined(USE_READLINE) && USE_READLINE
@@ -60,7 +61,8 @@ enum class MetaCommandType
     GET,
     DELETE,
     COUNT,
-    CLEAR
+    CLEAR,
+    TRASH_LIST,
 };
 
 class MetaCommand
@@ -113,6 +115,8 @@ public:
                 return MetaCommand(MetaCommandType::COUNT, tokens[1]);
             else if (tokens[0] == "clear")
                 return MetaCommand(MetaCommandType::CLEAR, tokens[1]);
+            else if (tokens[0] == "trash_list")
+                return MetaCommand(MetaCommandType::TRASH_LIST, tokens[1]);
             else
                 throw Exception(ErrorCodes::BAD_ARGUMENTS, "Unsupported metadata command {}", tokens[0]);
         }
@@ -376,6 +380,17 @@ private:
                     metastore_ptr->clean(full_key);
                     std::cout << "Deleted all by prefix: " << full_key << std::endl;
                     break;
+                }
+                case MetaCommandType::TRASH_LIST:
+                {
+                    Catalog::IMetaStore::IteratorPtr it = metastore_ptr->getByPrefix(full_key);
+                    while (it->next())
+                    {
+                        // format part ant print
+                        DB::Protos::DataModelPart part_model;
+                        part_model.ParseFromString(it->value());
+                        std::cout << it->key() << ":" << UUIDHelpers::UUIDToString(UUID(UInt128{part_model.part_id().low(), part_model.part_id().high()})) << std::endl;
+                    }
                 }
             }
         }
