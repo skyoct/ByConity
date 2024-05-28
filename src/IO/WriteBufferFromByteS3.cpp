@@ -112,7 +112,7 @@ void WriteBufferFromByteS3::nextImpl()
             createMultipartUpload();
         }
 
-        if (!multipart_upload_id.empty() && last_part_size > min_segment_size)
+        if (!multipart_upload_id.empty() && last_part_size >= min_segment_size)
         {
             writePart();
             clearBuffer();
