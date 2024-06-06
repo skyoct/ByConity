@@ -1577,17 +1577,17 @@ bool InterpreterCreateQuery::doCreateTable(ASTCreateQuery & create,
             // if (view->async() && getContext()->getSettingsRef().enable_non_partitioned_base_refresh_throw_exception)
             //     view->validatePartitionBased(getContext());
 
-            if (view->tryGetTargetTable() && !view->hasInnerTable())
-            {
-                StoragePtr target_table = view->tryGetTargetTable();
-                if (!target_table->getInMemoryMetadataPtr()->getColumns().getMaterialized().empty())
-                    throw Exception(
-                        ErrorCodes::ILLEGAL_COLUMN,
-                        "Cannot create materialized view {} to target table {} with materialized columns {}",
-                        view->getStorageID().getNameForLogs(),
-                        target_table->getStorageID().getNameForLogs(),
-                        target_table->getInMemoryMetadataPtr()->getColumns().getMaterialized().toString());
-            }
+            // if (view->tryGetTargetTable() && !view->hasInnerTable())
+            // {
+            //     StoragePtr target_table = view->tryGetTargetTable();
+            //     if (!target_table->getInMemoryMetadataPtr()->getColumns().getMaterialized().empty())
+            //         throw Exception(
+            //             ErrorCodes::ILLEGAL_COLUMN,
+            //             "Cannot create materialized view {} to target table {} with materialized columns {}",
+            //             view->getStorageID().getNameForLogs(),
+            //             target_table->getStorageID().getNameForLogs(),
+            //             target_table->getInMemoryMetadataPtr()->getColumns().getMaterialized().toString());
+            // }
         }
     }
     catch (...)
