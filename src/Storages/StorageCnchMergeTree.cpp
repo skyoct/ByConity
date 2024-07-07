@@ -806,7 +806,8 @@ void StorageCnchMergeTree::filterPartsByPartition(
     auto part_values = VirtualColumnUtils::extractSingleValueFromBlock<String>(virtual_columns_block, "_part");
 
     size_t prev_sz = parts.size();
-    size_t empty = 0, partition_minmax = 0, minmax_idx = 0, part_value = 0;
+    size_t empty = 0, partition_minmax = 0, minmax_idx = 0, part_value = 0, skip_read = 0;
+    TxnTimestamp skip_read_timestamp = TxnTimestamp::fromUnixTimestamp(time(nullptr) - settings.skip_read_latest_write_part);
     std::erase_if(parts, [&](const auto & part) {
         auto base_part = part->getBasePart();
         if (base_part->isEmpty())
@@ -831,6 +832,11 @@ void StorageCnchMergeTree::filterPartsByPartition(
             ++part_value;
             return true;
         }
+        else if (part->get_info().level == 0 && part->get_commit_time() > skip_read_timestamp)
+        {
+            ++skip_read;
+            return true;
+        }
 
         return false;
     });
@@ -839,12 +845,13 @@ void StorageCnchMergeTree::filterPartsByPartition(
         LOG_DEBUG(
             log,
             "Parts pruning rules dropped {} parts, include {} empty parts, {} parts by partition minmax, {} parts by minmax index, {} "
-            "parts by part value",
+            "parts by part value, {} parts by skip read",
             prev_sz - parts.size(),
             empty,
             partition_minmax,
             minmax_idx,
-            part_value);
+            part_value,
+            skip_read);
 }
 
 /// Add related tables for active timestamps

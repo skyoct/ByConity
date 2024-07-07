@@ -182,6 +182,20 @@ QueryPlanPtr MergeTreeDataSelectExecutor::read(
 
     parts.erase(std::remove_if(parts.begin(), parts.end(), [](auto & part) { return part->info.isFakeDropRangePart(); }), parts.end());
 
+    TxnTimestamp skip_read_timestamp = TxnTimestamp::fromUnixTimestamp(time(nullptr) - settings.skip_read_latest_write_part);
+    size_t skip_read = 0;
+    std::erase_if(parts, [&](const auto & part) {
+        if (part->get_info().level == 0 && part->get_commit_time() > skip_read_timestamp)
+        {
+            ++ skip_read;
+            return true;
+        }
+        return false;
+    });
+
+    if (skip_read)
+        LOG_DEBUG(log, "Parts pruning by skip read {}", skip_read);
+
     if (!query_info.projection)
     {
         MergeTreeMetaBase::DeleteBitmapGetter delete_bitmap_getter;
