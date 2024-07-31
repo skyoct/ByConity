@@ -349,11 +349,13 @@ void CnchDataWriter::commitDumpedParts(const DumpedData & dumped_data)
             {
                 /// case: client submits INSERTs directly to worker
                 server_client = worker_txn->getServerClient();
+                LOG_DEBUG(storage.getLogger(), "Get server client from step 1 : {}", server_client->getRPCAddress());
             }
             else if (const auto & client_info = context->getClientInfo(); client_info.rpc_port)
             {
                 /// case: "insert select/infile" forward to worker | manipulation task | cnch system log flush | ingestion from kafka | etc
                 server_client = context->getCnchServerClient(client_info.current_address.host().toString(), client_info.rpc_port);
+                LOG_DEBUG(storage.getLogger(), "Get server client from step 2 : {} {}", server_client->getRPCAddress(), client_info.current_address.host().toString());
             }
             else
             {
