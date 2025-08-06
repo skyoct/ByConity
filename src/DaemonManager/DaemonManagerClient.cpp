@@ -93,7 +93,10 @@ void DaemonManagerClient::controlDaemonJob(const StorageID & storage_id, CnchBGT
     Protos::ControlDaemonJobResp resp;
 
     if (!storage_id.empty())
+    {
         RPCHelpers::fillStorageID(storage_id, *req.mutable_storage_id());
+        cntl.set_timeout_ms(60 * 1000);
+    }
     else
         cntl.set_timeout_ms(360 * 1000);
     req.set_job_type(job_type);
